@@ -1,0 +1,29 @@
+---
+machine:
+  hosts:
+    drupalvm.dev: 127.0.0.1
+  environment:
+    BEET_HOME: /beetbox
+    BEET_USER: ubuntu
+    BEET_DEPENDENCIES: https://raw.githubusercontent.com/beetboxvm/beetbox/master/provisioning/beetbox.sh
+    BEET_PROVISION: provisioning/beetbox.sh
+    DVM_REMAP: https://gist.githubusercontent.com/thom8/8edc943772eb8c6f5edb/raw
+    DVM_ROOT: /var/www/drupalvm
+    DRUPAL_ROOT: /var/www/drupalvm/drupal
+    DRUPAL_TEST_SH: core/scripts/run-tests.sh
+    DRUPAL_TEST: Access
+dependencies:
+  pre:
+    - sudo chmod 777 $CIRCLE_TEST_REPORTS
+    - sudo cp ~/$CIRCLE_PROJECT_REPONAME/config.yml ~/config.yml
+    - cd ~ ; curl -fsSL $DVM_REMAP | bash ; mv config.yml vagrant.config.yml
+    - sudo mkdir -p $DVM_ROOT ; sudo cp -rf ~/$CIRCLE_PROJECT_REPONAME/* $DVM_ROOT ; sudo chown -R $BEET_USER:$BEET_USER $DVM_ROOT
+    - curl -fsSL $BEET_DEPENDENCIES | bash
+test:
+  override:
+    - sudo chown -R $BEET_USER:$BEET_USER $DRUPAL_ROOT
+    - drush --root=$DRUPAL_ROOT en simpletest -y
+    - sudo chown -R www-data:www-data $DRUPAL_ROOT/sites/default/files
+    - sudo -u www-data php $DRUPAL_ROOT/$DRUPAL_TEST_SH --url http://drupalvm.dev --xml $CIRCLE_TEST_REPORTS $DRUPAL_TEST
+    # - /path/to/test/script.sh
+
