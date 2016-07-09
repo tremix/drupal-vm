@@ -178,6 +178,7 @@ installed_extras:
   # - memcached
   # - newrelic
   # - nodejs
+  # - phantomjs
   - pimpmylog
   # - redis
   # - ruby
